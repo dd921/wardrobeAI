@@ -1,0 +1,70 @@
+# Node modules
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Production
+build/
+dist/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files (local secrets)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# macOS
+.DS_Store
+Icon
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+/coverage/
+
+# Storybook
+/storybook-static/
+
+# Optional npm cache
+.npm
+
+# Supabase / local DB
+supabase/.local
+.supabase
+
+# Database files
+*.sqlite
+*.sqlite3
+
+# Generated uploads or assets
+/public/uploads/
+/public/static/uploads/
+
+# JetBrains
+*.iml
+
+# Local Next.js cache
+.next/cache/
+
+# Vercel
+/.vercel
+
+# Editor settings that may contain secrets
+.vscode/settings.json

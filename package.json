@@ -2,6 +2,9 @@
   "name": "wardrobe-ai",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=18.17.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -25,7 +28,7 @@
     "date-fns": "^2.30.0",
     "framer-motion": "^10.16.0",
     "lucide-react": "^0.294.0",
-    "next": "14.0.4",
+    "next": "^14.2.35",
     "postcss": "^8.4.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -40,6 +43,6 @@
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.7",
     "eslint": "^8.55.0",
-    "eslint-config-next": "14.0.4"
+    "eslint-config-next": "^14.2.35"
   }
 }

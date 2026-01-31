@@ -18,7 +18,7 @@ interface OutfitSuggestion {
 }
 
 export default function OutfitsPage() {
-  const { outfits, items, addNewOutfit, loading } = useWardrobe()
+  const { outfits, items, addNewOutfit, updateOutfit, deleteOutfit, loading } = useWardrobe()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
@@ -51,14 +51,25 @@ export default function OutfitsPage() {
   }
 
   const handleToggleFavorite = async (outfitId: string) => {
-    // TODO: Implement outfit favorite toggle when we add updateOutfit to context
-    toast.success('Favorite toggled')
+    const outfit = outfits.find(o => o.id === outfitId)
+    if (!outfit) return
+
+    const result = await updateOutfit(outfitId, { isFavorite: !outfit.isFavorite })
+    if (result) {
+      toast.success(result.isFavorite ? 'Added to favorites' : 'Removed from favorites')
+    } else {
+      toast.error('Failed to update favorite')
+    }
   }
 
   const handleDeleteOutfit = async (outfitId: string) => {
     if (confirm('Are you sure you want to delete this outfit?')) {
-      // TODO: Implement outfit deletion when we add deleteOutfit to context
-      toast.success('Outfit deleted')
+      const success = await deleteOutfit(outfitId)
+      if (success) {
+        toast.success('Outfit deleted')
+      } else {
+        toast.error('Failed to delete outfit')
+      }
     }
   }
 

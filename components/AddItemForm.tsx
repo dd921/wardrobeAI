@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useRef, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -47,6 +47,7 @@ const suggestedTags = [
 
 export default function AddItemForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { addItem } = useWardrobe()
   const [images, setImages] = useState<string[]>([])
   const [imageFiles, setImageFiles] = useState<File[]>([])
@@ -59,6 +60,26 @@ export default function AddItemForm() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const dropZoneRef = useRef<HTMLDivElement>(null)
+
+  // Load captured photo from camera page
+  useEffect(() => {
+    const fromCamera = searchParams.get('fromCamera')
+    if (fromCamera === 'true') {
+      const capturedPhoto = sessionStorage.getItem('capturedPhoto')
+      if (capturedPhoto) {
+        // Convert data URL to File
+        fetch(capturedPhoto)
+          .then(res => res.blob())
+          .then(blob => {
+            const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' })
+            setImageFiles([file])
+            setImagePreviews([capturedPhoto])
+            sessionStorage.removeItem('capturedPhoto')
+          })
+          .catch(err => console.error('Error loading captured photo:', err))
+      }
+    }
+  }, [searchParams])
 
   const {
     register,

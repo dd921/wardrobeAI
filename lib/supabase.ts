@@ -1,9 +1,47 @@
-import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
+import { User, Session } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Browser client that properly syncs with cookies for SSR
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
+
+// Auth helper functions
+export const signUp = async (email: string, password: string) => {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  })
+  return { data, error }
+}
+
+export const signIn = async (email: string, password: string) => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+  return { data, error }
+}
+
+export const signOut = async () => {
+  const { error } = await supabase.auth.signOut()
+  return { error }
+}
+
+export const getCurrentUser = async (): Promise<User | null> => {
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
+}
+
+export const getSession = async (): Promise<Session | null> => {
+  const { data: { session } } = await supabase.auth.getSession()
+  return session
+}
+
+export const onAuthStateChange = (callback: (event: string, session: Session | null) => void) => {
+  return supabase.auth.onAuthStateChange(callback)
+}
 
 // Database types
 export interface Database {
@@ -25,6 +63,7 @@ export interface Database {
           last_worn: string | null
           wear_count: number
           is_favorite: boolean
+          image_urls: string[]
           created_at: string
           updated_at: string
           user_id: string
@@ -44,6 +83,7 @@ export interface Database {
           last_worn?: string | null
           wear_count?: number
           is_favorite?: boolean
+          image_urls?: string[]
           created_at?: string
           updated_at?: string
           user_id: string
@@ -63,6 +103,7 @@ export interface Database {
           last_worn?: string | null
           wear_count?: number
           is_favorite?: boolean
+          image_urls?: string[]
           created_at?: string
           updated_at?: string
           user_id?: string

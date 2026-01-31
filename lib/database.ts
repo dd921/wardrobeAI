@@ -1,10 +1,20 @@
-import { supabase } from './supabase'
+import { supabase, getSession } from './supabase'
 import { ClothingItem, Tag, Outfit, ClothingCategory, TagCategory } from '@/types/wardrobe'
 import { generateId } from './utils'
 
-// Helper function to get current user ID (for now, using a mock user)
-export const getCurrentUserId = () => {
-  // In a real app, this would come from authentication
+// Helper function to get current user ID from auth session
+export const getCurrentUserId = async (): Promise<string> => {
+  const session = await getSession()
+  if (!session?.user?.id) {
+    throw new Error('User not authenticated')
+  }
+  return session.user.id
+}
+
+// Synchronous version for backward compatibility in some contexts
+// Falls back to mock ID only when Supabase isn't configured
+export const getCurrentUserIdSync = (): string => {
+  // This will be replaced by async calls in actual usage
   return '00000000-0000-0000-0000-000000000000'
 }
 
@@ -66,47 +76,62 @@ export const getClothingItems = async (): Promise<ClothingItem[]> => {
     return mockItems
   }
 
-  const { data, error } = await supabase
-    .from('clothing_items')
-    .select(`
-      *,
-      item_tags (
-        tags (*)
-      )
-    `)
-    .eq('user_id', getCurrentUserId())
-    .order('created_at', { ascending: false })
+  try {
+    const userId = await getCurrentUserId()
+    const { data, error } = await supabase
+      .from('clothing_items')
+      .select(`
+        *,
+        item_tags (
+          tags (*)
+        )
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
 
-  if (error) {
-    console.error('Error fetching clothing items:', error)
+    if (error) {
+      console.error('Error fetching clothing items:', error)
+      return mockItems // Fallback to mock data
+    }
+
+  return data?.map(item => {
+    console.log('Processing item:', {
+      id: item.id,
+      name: item.name,
+      image_urls: item.image_urls,
+      has_images: item.image_urls && item.image_urls.length > 0
+    })
+    
+    return {
+      id: item.id,
+      name: item.name,
+      description: item.description || undefined,
+      category: item.category as ClothingCategory,
+      tags: item.item_tags?.map((it: any) => it.tags.name) || [],
+      images: item.image_urls || [],
+      brand: item.brand || undefined,
+      size: item.size || undefined,
+      color: item.color || undefined,
+      material: item.material || undefined,
+      purchaseDate: item.purchase_date ? new Date(item.purchase_date) : undefined,
+      price: item.price || undefined,
+      careInstructions: item.care_instructions || undefined,
+      lastWorn: item.last_worn ? new Date(item.last_worn) : undefined,
+      wearCount: item.wear_count,
+      isFavorite: item.is_favorite,
+      createdAt: new Date(item.created_at),
+      updatedAt: new Date(item.updated_at)
+    }
+  }) || []
+  } catch (error) {
+    console.error('Unexpected error fetching clothing items:', error)
     return mockItems // Fallback to mock data
   }
-
-  return data?.map(item => ({
-    id: item.id,
-    name: item.name,
-    description: item.description || undefined,
-    category: item.category as ClothingCategory,
-    tags: item.item_tags?.map((it: any) => it.tags.name) || [],
-    images: [], // TODO: Implement image storage
-    brand: item.brand || undefined,
-    size: item.size || undefined,
-    color: item.color || undefined,
-    material: item.material || undefined,
-    purchaseDate: item.purchase_date ? new Date(item.purchase_date) : undefined,
-    price: item.price || undefined,
-    careInstructions: item.care_instructions || undefined,
-    lastWorn: item.last_worn ? new Date(item.last_worn) : undefined,
-    wearCount: item.wear_count,
-    isFavorite: item.is_favorite,
-    createdAt: new Date(item.created_at),
-    updatedAt: new Date(item.updated_at)
-  })) || []
 }
 
 export const addClothingItem = async (itemData: Omit<ClothingItem, 'id' | 'createdAt' | 'updatedAt' | 'wearCount'>): Promise<ClothingItem | null> => {
   console.log('addClothingItem called with:', itemData)
-  
+
   if (!isSupabaseConfigured()) {
     console.log('Supabase not configured, simulating item addition')
     // Simulate adding to mock data
@@ -123,7 +148,7 @@ export const addClothingItem = async (itemData: Omit<ClothingItem, 'id' | 'creat
   }
 
   console.log('Using Supabase for item addition')
-  const userId = getCurrentUserId()
+  const userId = await getCurrentUserId()
   const now = new Date().toISOString()
 
   // Insert the clothing item
@@ -144,6 +169,7 @@ export const addClothingItem = async (itemData: Omit<ClothingItem, 'id' | 'creat
       last_worn: itemData.lastWorn?.toISOString() || null,
       wear_count: 0,
       is_favorite: itemData.isFavorite || false,
+      image_urls: itemData.images || [],
       created_at: now,
       updated_at: now,
       user_id: userId
@@ -153,10 +179,17 @@ export const addClothingItem = async (itemData: Omit<ClothingItem, 'id' | 'creat
 
   if (itemError) {
     console.error('Error adding clothing item:', itemError)
+    console.error('Item data that failed:', {
+      name: itemData.name,
+      category: itemData.category,
+      image_urls: itemData.images,
+      user_id: userId
+    })
     return null
   }
 
   console.log('Item inserted successfully:', item)
+  console.log('Item image_urls from database:', item.image_urls)
 
   // Add tags if provided
   if (itemData.tags && itemData.tags.length > 0) {
@@ -186,6 +219,7 @@ export const addClothingItem = async (itemData: Omit<ClothingItem, 'id' | 'creat
   }
 
   console.log('Returning result:', result)
+  console.log('Result images:', result.images)
   return result
 }
 
@@ -200,6 +234,7 @@ export const updateClothingItem = async (id: string, updates: Partial<ClothingIt
     return null
   }
 
+  const userId = await getCurrentUserId()
   const now = new Date().toISOString()
 
   const { data, error } = await supabase
@@ -218,10 +253,11 @@ export const updateClothingItem = async (id: string, updates: Partial<ClothingIt
       last_worn: updates.lastWorn?.toISOString() || null,
       wear_count: updates.wearCount,
       is_favorite: updates.isFavorite,
+      image_urls: updates.images,
       updated_at: now
     })
     .eq('id', id)
-    .eq('user_id', getCurrentUserId())
+    .eq('user_id', userId)
     .select()
     .single()
 
@@ -277,6 +313,8 @@ export const deleteClothingItem = async (id: string): Promise<boolean> => {
     return false
   }
 
+  const userId = await getCurrentUserId()
+
   // Delete associated tags first
   await supabase
     .from('item_tags')
@@ -288,7 +326,7 @@ export const deleteClothingItem = async (id: string): Promise<boolean> => {
     .from('clothing_items')
     .delete()
     .eq('id', id)
-    .eq('user_id', getCurrentUserId())
+    .eq('user_id', userId)
 
   if (error) {
     console.error('Error deleting clothing item:', error)
@@ -300,10 +338,11 @@ export const deleteClothingItem = async (id: string): Promise<boolean> => {
 
 // Tags
 export const getTags = async (): Promise<Tag[]> => {
+  const userId = await getCurrentUserId()
   const { data, error } = await supabase
     .from('tags')
     .select('*')
-    .eq('user_id', getCurrentUserId())
+    .eq('user_id', userId)
     .order('usage_count', { ascending: false })
 
   if (error) {
@@ -322,7 +361,7 @@ export const getTags = async (): Promise<Tag[]> => {
 }
 
 export const addTag = async (tagData: Omit<Tag, 'id' | 'createdAt' | 'usageCount'>): Promise<Tag | null> => {
-  const userId = getCurrentUserId()
+  const userId = await getCurrentUserId()
   const now = new Date().toISOString()
 
   const { data, error } = await supabase
@@ -356,7 +395,7 @@ export const addTag = async (tagData: Omit<Tag, 'id' | 'createdAt' | 'usageCount
 
 // Helper function to add tags to an item
 const addTagsToItem = async (itemId: string, tagNames: string[]): Promise<void> => {
-  const userId = getCurrentUserId()
+  const userId = await getCurrentUserId()
 
   for (const tagName of tagNames) {
     // Check if tag exists, create if not
@@ -369,7 +408,7 @@ const addTagsToItem = async (itemId: string, tagNames: string[]): Promise<void> 
 
     if (!existingTag) {
       // Create new tag
-      const { data: newTag } = await supabase
+      const { data: newTag, error: tagError } = await supabase
         .from('tags')
         .insert({
           id: generateId(),
@@ -383,17 +422,31 @@ const addTagsToItem = async (itemId: string, tagNames: string[]): Promise<void> 
         .select()
         .single()
 
+      if (tagError) {
+        console.error('Error creating tag:', tagError)
+        continue // Skip this tag and continue with the next one
+      }
+
       existingTag = newTag
     } else {
       // Increment usage count
-      await supabase
+      const { data: currentTag } = await supabase
         .from('tags')
-        .update({ usage_count: supabase.raw('usage_count + 1') })
+        .select('usage_count')
         .eq('id', existingTag.id)
+        .single()
+      
+      if (currentTag) {
+        await supabase
+          .from('tags')
+          .update({ usage_count: (currentTag.usage_count || 0) + 1 })
+          .eq('id', existingTag.id)
+      }
     }
 
-    // Link tag to item
-    await supabase
+    // Link tag to item (existingTag is guaranteed to be non-null here due to the continue above)
+    if (!existingTag) continue
+    const { error: linkError } = await supabase
       .from('item_tags')
       .insert({
         id: generateId(),
@@ -401,11 +454,17 @@ const addTagsToItem = async (itemId: string, tagNames: string[]): Promise<void> 
         tag_id: existingTag.id,
         created_at: new Date().toISOString()
       })
+
+    if (linkError) {
+      console.error('Error linking tag to item:', linkError)
+      // Continue with the next tag even if this one fails
+    }
   }
 }
 
 // Outfits
 export const getOutfits = async (): Promise<Outfit[]> => {
+  const userId = await getCurrentUserId()
   const { data, error } = await supabase
     .from('outfits')
     .select(`
@@ -417,7 +476,7 @@ export const getOutfits = async (): Promise<Outfit[]> => {
         tags (*)
       )
     `)
-    .eq('user_id', getCurrentUserId())
+    .eq('user_id', userId)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -438,7 +497,7 @@ export const getOutfits = async (): Promise<Outfit[]> => {
 }
 
 export const addOutfit = async (outfitData: Omit<Outfit, 'id' | 'createdAt' | 'updatedAt'>): Promise<Outfit | null> => {
-  const userId = getCurrentUserId()
+  const userId = await getCurrentUserId()
   const now = new Date().toISOString()
 
   const { data: outfit, error: outfitError } = await supabase
@@ -503,14 +562,16 @@ export const addOutfit = async (outfitData: Omit<Outfit, 'id' | 'createdAt' | 'u
         tag = newTag
       }
 
-      await supabase
-        .from('outfit_tags')
-        .insert({
-          id: generateId(),
-          outfit_id: outfit.id,
-          tag_id: tag.id,
-          created_at: now
-        })
+      if (tag) {
+        await supabase
+          .from('outfit_tags')
+          .insert({
+            id: generateId(),
+            outfit_id: outfit.id,
+            tag_id: tag.id,
+            created_at: now
+          })
+      }
     }
   }
 

@@ -65,13 +65,11 @@ export interface Outfit {
 
 export interface WardrobeStats {
   totalItems: number;
-  itemsByCategory: Record<ClothingCategory, number>;
-  itemsByColor: Record<string, number>;
-  mostWornItems: ClothingItem[];
-  leastWornItems: ClothingItem[];
-  recentAdditions: ClothingItem[];
   totalValue: number;
-  averagePrice: number;
+  favoriteItems: number;
+  recentItems: number;
+  categoryBreakdown: Record<string, number>;
+  mostWorn: ClothingItem[];
 }
 
 export interface SearchFilters {

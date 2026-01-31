@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS clothing_items (
     last_worn TIMESTAMP WITH TIME ZONE,
     wear_count INTEGER DEFAULT 0,
     is_favorite BOOLEAN DEFAULT FALSE,
+    image_urls TEXT[] DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     user_id UUID NOT NULL
@@ -129,101 +130,121 @@ ALTER TABLE outfits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE outfit_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE outfit_tags ENABLE ROW LEVEL SECURITY;
 
--- Create policies (for now, allowing all operations for the mock user)
--- In production, you would replace '00000000-0000-0000-0000-000000000000' with actual user authentication
+-- Drop existing policies if they exist (for migration)
+DROP POLICY IF EXISTS "Users can view their own clothing items" ON clothing_items;
+DROP POLICY IF EXISTS "Users can insert their own clothing items" ON clothing_items;
+DROP POLICY IF EXISTS "Users can update their own clothing items" ON clothing_items;
+DROP POLICY IF EXISTS "Users can delete their own clothing items" ON clothing_items;
+DROP POLICY IF EXISTS "Users can view their own tags" ON tags;
+DROP POLICY IF EXISTS "Users can insert their own tags" ON tags;
+DROP POLICY IF EXISTS "Users can update their own tags" ON tags;
+DROP POLICY IF EXISTS "Users can delete their own tags" ON tags;
+DROP POLICY IF EXISTS "Users can view item tags" ON item_tags;
+DROP POLICY IF EXISTS "Users can insert item tags" ON item_tags;
+DROP POLICY IF EXISTS "Users can delete item tags" ON item_tags;
+DROP POLICY IF EXISTS "Users can view their own outfits" ON outfits;
+DROP POLICY IF EXISTS "Users can insert their own outfits" ON outfits;
+DROP POLICY IF EXISTS "Users can update their own outfits" ON outfits;
+DROP POLICY IF EXISTS "Users can delete their own outfits" ON outfits;
+DROP POLICY IF EXISTS "Users can view outfit items" ON outfit_items;
+DROP POLICY IF EXISTS "Users can insert outfit items" ON outfit_items;
+DROP POLICY IF EXISTS "Users can delete outfit items" ON outfit_items;
+DROP POLICY IF EXISTS "Users can view outfit tags" ON outfit_tags;
+DROP POLICY IF EXISTS "Users can insert outfit tags" ON outfit_tags;
+DROP POLICY IF EXISTS "Users can delete outfit tags" ON outfit_tags;
 
--- Clothing items policies
+-- Clothing items policies (using auth.uid() for real authentication)
 CREATE POLICY "Users can view their own clothing items" ON clothing_items
-    FOR SELECT USING (user_id = '00000000-0000-0000-0000-000000000000'::uuid);
+    FOR SELECT USING (user_id = auth.uid());
 
 CREATE POLICY "Users can insert their own clothing items" ON clothing_items
-    FOR INSERT WITH CHECK (user_id = '00000000-0000-0000-0000-000000000000'::uuid);
+    FOR INSERT WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "Users can update their own clothing items" ON clothing_items
-    FOR UPDATE USING (user_id = '00000000-0000-0000-0000-000000000000'::uuid);
+    FOR UPDATE USING (user_id = auth.uid());
 
 CREATE POLICY "Users can delete their own clothing items" ON clothing_items
-    FOR DELETE USING (user_id = '00000000-0000-0000-0000-000000000000'::uuid);
+    FOR DELETE USING (user_id = auth.uid());
 
 -- Tags policies
 CREATE POLICY "Users can view their own tags" ON tags
-    FOR SELECT USING (user_id = '00000000-0000-0000-0000-000000000000'::uuid);
+    FOR SELECT USING (user_id = auth.uid());
 
 CREATE POLICY "Users can insert their own tags" ON tags
-    FOR INSERT WITH CHECK (user_id = '00000000-0000-0000-0000-000000000000'::uuid);
+    FOR INSERT WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "Users can update their own tags" ON tags
-    FOR UPDATE USING (user_id = '00000000-0000-0000-0000-000000000000'::uuid);
+    FOR UPDATE USING (user_id = auth.uid());
 
 CREATE POLICY "Users can delete their own tags" ON tags
-    FOR DELETE USING (user_id = '00000000-0000-0000-0000-000000000000'::uuid);
+    FOR DELETE USING (user_id = auth.uid());
 
 -- Item tags policies
 CREATE POLICY "Users can view item tags" ON item_tags
     FOR SELECT USING (
         EXISTS (
-            SELECT 1 FROM clothing_items 
-            WHERE clothing_items.id = item_tags.item_id 
-            AND clothing_items.user_id = '00000000-0000-0000-0000-000000000000'::uuid
+            SELECT 1 FROM clothing_items
+            WHERE clothing_items.id = item_tags.item_id
+            AND clothing_items.user_id = auth.uid()
         )
     );
 
 CREATE POLICY "Users can insert item tags" ON item_tags
     FOR INSERT WITH CHECK (
         EXISTS (
-            SELECT 1 FROM clothing_items 
-            WHERE clothing_items.id = item_tags.item_id 
-            AND clothing_items.user_id = '00000000-0000-0000-0000-000000000000'::uuid
+            SELECT 1 FROM clothing_items
+            WHERE clothing_items.id = item_tags.item_id
+            AND clothing_items.user_id = auth.uid()
         )
     );
 
 CREATE POLICY "Users can delete item tags" ON item_tags
     FOR DELETE USING (
         EXISTS (
-            SELECT 1 FROM clothing_items 
-            WHERE clothing_items.id = item_tags.item_id 
-            AND clothing_items.user_id = '00000000-0000-0000-0000-000000000000'::uuid
+            SELECT 1 FROM clothing_items
+            WHERE clothing_items.id = item_tags.item_id
+            AND clothing_items.user_id = auth.uid()
         )
     );
 
 -- Outfits policies
 CREATE POLICY "Users can view their own outfits" ON outfits
-    FOR SELECT USING (user_id = '00000000-0000-0000-0000-000000000000'::uuid);
+    FOR SELECT USING (user_id = auth.uid());
 
 CREATE POLICY "Users can insert their own outfits" ON outfits
-    FOR INSERT WITH CHECK (user_id = '00000000-0000-0000-0000-000000000000'::uuid);
+    FOR INSERT WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "Users can update their own outfits" ON outfits
-    FOR UPDATE USING (user_id = '00000000-0000-0000-0000-000000000000'::uuid);
+    FOR UPDATE USING (user_id = auth.uid());
 
 CREATE POLICY "Users can delete their own outfits" ON outfits
-    FOR DELETE USING (user_id = '00000000-0000-0000-0000-000000000000'::uuid);
+    FOR DELETE USING (user_id = auth.uid());
 
 -- Outfit items policies
 CREATE POLICY "Users can view outfit items" ON outfit_items
     FOR SELECT USING (
         EXISTS (
-            SELECT 1 FROM outfits 
-            WHERE outfits.id = outfit_items.outfit_id 
-            AND outfits.user_id = '00000000-0000-0000-0000-000000000000'::uuid
+            SELECT 1 FROM outfits
+            WHERE outfits.id = outfit_items.outfit_id
+            AND outfits.user_id = auth.uid()
         )
     );
 
 CREATE POLICY "Users can insert outfit items" ON outfit_items
     FOR INSERT WITH CHECK (
         EXISTS (
-            SELECT 1 FROM outfits 
-            WHERE outfits.id = outfit_items.outfit_id 
-            AND outfits.user_id = '00000000-0000-0000-0000-000000000000'::uuid
+            SELECT 1 FROM outfits
+            WHERE outfits.id = outfit_items.outfit_id
+            AND outfits.user_id = auth.uid()
         )
     );
 
 CREATE POLICY "Users can delete outfit items" ON outfit_items
     FOR DELETE USING (
         EXISTS (
-            SELECT 1 FROM outfits 
-            WHERE outfits.id = outfit_items.outfit_id 
-            AND outfits.user_id = '00000000-0000-0000-0000-000000000000'::uuid
+            SELECT 1 FROM outfits
+            WHERE outfits.id = outfit_items.outfit_id
+            AND outfits.user_id = auth.uid()
         )
     );
 
@@ -231,27 +252,27 @@ CREATE POLICY "Users can delete outfit items" ON outfit_items
 CREATE POLICY "Users can view outfit tags" ON outfit_tags
     FOR SELECT USING (
         EXISTS (
-            SELECT 1 FROM outfits 
-            WHERE outfits.id = outfit_tags.outfit_id 
-            AND outfits.user_id = '00000000-0000-0000-0000-000000000000'::uuid
+            SELECT 1 FROM outfits
+            WHERE outfits.id = outfit_tags.outfit_id
+            AND outfits.user_id = auth.uid()
         )
     );
 
 CREATE POLICY "Users can insert outfit tags" ON outfit_tags
     FOR INSERT WITH CHECK (
         EXISTS (
-            SELECT 1 FROM outfits 
-            WHERE outfits.id = outfit_tags.outfit_id 
-            AND outfits.user_id = '00000000-0000-0000-0000-000000000000'::uuid
+            SELECT 1 FROM outfits
+            WHERE outfits.id = outfit_tags.outfit_id
+            AND outfits.user_id = auth.uid()
         )
     );
 
 CREATE POLICY "Users can delete outfit tags" ON outfit_tags
     FOR DELETE USING (
         EXISTS (
-            SELECT 1 FROM outfits 
-            WHERE outfits.id = outfit_tags.outfit_id 
-            AND outfits.user_id = '00000000-0000-0000-0000-000000000000'::uuid
+            SELECT 1 FROM outfits
+            WHERE outfits.id = outfit_tags.outfit_id
+            AND outfits.user_id = auth.uid()
         )
     );
 

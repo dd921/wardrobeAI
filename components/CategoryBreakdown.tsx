@@ -1,24 +1,9 @@
 'use client'
 
 import { ClothingCategory } from '@/types/wardrobe'
+import { useWardrobe } from '@/contexts/WardrobeContext'
 
-// Mock data - in a real app, this would come from your data store
-const categoryData: Record<ClothingCategory, number> = {
-  'Tops': 32,
-  'Bottoms': 28,
-  'Outerwear': 15,
-  'Shoes': 18,
-  'Accessories': 12,
-  'Undergarments': 8,
-  'Sleepwear': 6,
-  'Activewear': 14,
-  'Formal Wear': 4,
-  'Swimwear': 3,
-  'Loungewear': 5,
-  'Other': 2
-}
-
-const categoryColors = {
+const categoryColors: Record<ClothingCategory, string> = {
   'Tops': 'bg-blue-500',
   'Bottoms': 'bg-green-500',
   'Outerwear': 'bg-purple-500',
@@ -33,22 +18,53 @@ const categoryColors = {
   'Other': 'bg-slate-500'
 }
 
-const totalItems = Object.values(categoryData).reduce((sum, count) => sum + count, 0)
-
 export default function CategoryBreakdown() {
+  const { stats, loading } = useWardrobe()
+
+  if (loading) {
+    return (
+      <div className="card">
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">Category Breakdown</h2>
+        <div className="space-y-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="animate-pulse flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-4 h-4 rounded-full bg-gray-300" />
+                <div className="h-4 bg-gray-300 rounded w-20" />
+              </div>
+              <div className="h-2 bg-gray-300 rounded w-32" />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  const categoryData = stats?.categoryBreakdown || {}
+  const totalItems = Object.values(categoryData).reduce((sum, count) => sum + count, 0)
+
   const sortedCategories = Object.entries(categoryData)
     .sort(([, a], [, b]) => b - a)
-    .slice(0, 8) // Show top 8 categories
+    .slice(0, 8)
+
+  if (sortedCategories.length === 0) {
+    return (
+      <div className="card">
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">Category Breakdown</h2>
+        <p className="text-gray-500 text-sm text-center py-4">No items yet. Add some clothes to see your category breakdown.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="card">
       <h2 className="text-lg font-semibold text-gray-900 mb-6">Category Breakdown</h2>
-      
+
       <div className="space-y-4">
         {sortedCategories.map(([category, count]) => {
-          const percentage = ((count / totalItems) * 100).toFixed(1)
-          const colorClass = categoryColors[category as ClothingCategory]
-          
+          const percentage = totalItems > 0 ? ((count / totalItems) * 100).toFixed(1) : '0'
+          const colorClass = categoryColors[category as ClothingCategory] || 'bg-gray-500'
+
           return (
             <div key={category} className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -57,7 +73,7 @@ export default function CategoryBreakdown() {
                   {category}
                 </span>
               </div>
-              
+
               <div className="flex items-center space-x-3">
                 <div className="flex-1 w-32 bg-gray-200 rounded-full h-2">
                   <div
@@ -76,7 +92,7 @@ export default function CategoryBreakdown() {
           )
         })}
       </div>
-      
+
       <div className="mt-6 pt-4 border-t border-gray-200">
         <div className="flex items-center justify-between text-sm">
           <span className="text-gray-600">Total Items</span>

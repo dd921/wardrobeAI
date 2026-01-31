@@ -2,10 +2,10 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { ClothingItem, Tag, Outfit, WardrobeStats } from '@/types/wardrobe'
-import { 
-  getClothingItems, 
-  addClothingItem, 
-  updateClothingItem, 
+import {
+  getClothingItems,
+  addClothingItem,
+  updateClothingItem,
   deleteClothingItem,
   getTags,
   addTag,
@@ -13,6 +13,7 @@ import {
   addOutfit,
   getWardrobeStats
 } from '@/lib/database'
+import { useAuth } from './AuthContext'
 
 interface WardrobeContextType {
   // State
@@ -54,6 +55,7 @@ interface WardrobeProviderProps {
 }
 
 export const WardrobeProvider: React.FC<WardrobeProviderProps> = ({ children }) => {
+  const { user, loading: authLoading } = useAuth()
   const [items, setItems] = useState<ClothingItem[]>([])
   const [tags, setTags] = useState<Tag[]>([])
   const [outfits, setOutfits] = useState<Outfit[]>([])
@@ -133,11 +135,13 @@ export const WardrobeProvider: React.FC<WardrobeProviderProps> = ({ children }) 
         await refreshTags() // Refresh tags in case new ones were created
         console.log('Item added successfully to context')
       } else {
-        console.log('addClothingItem returned null')
+        console.log('addClothingItem returned null - check database logs for details')
+        setError('Failed to add item to database. Check console for details.')
       }
       return newItem
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add item')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add item'
+      setError(errorMessage)
       console.error('Error adding item:', err)
       return null
     }
@@ -209,10 +213,23 @@ export const WardrobeProvider: React.FC<WardrobeProviderProps> = ({ children }) 
     }
   }
 
-  // Initialize data on mount
+  // Initialize data when user is authenticated
   useEffect(() => {
-    refreshAll()
-  }, [])
+    if (authLoading) {
+      return // Wait for auth to complete
+    }
+
+    if (user) {
+      refreshAll()
+    } else {
+      // Clear data when logged out
+      setItems([])
+      setTags([])
+      setOutfits([])
+      setStats(null)
+      setLoading(false)
+    }
+  }, [user, authLoading])
 
   const value: WardrobeContextType = {
     // State

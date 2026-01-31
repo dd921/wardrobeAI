@@ -77,13 +77,72 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-  
+
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Touch-friendly utilities for mobile */
+  .touch-action-manipulation {
+    touch-action: manipulation;
+  }
+
+  .min-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  /* Ensure touch targets are at least 44x44px on mobile */
+  button,
+  a,
+  input[type="file"],
+  input[type="submit"],
+  .btn-primary,
+  .btn-secondary {
+    min-height: 44px;
+  }
+
+  /* Prevent double-tap zoom on interactive elements */
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  /* Larger form inputs on mobile for easier typing */
+  input,
+  select,
+  textarea {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+
+  /* Better spacing for mobile cards */
+  .card {
+    @apply p-4;
+  }
+}
+
+/* PWA standalone mode optimizations */
+@media (display-mode: standalone) {
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Allow text selection in form inputs */
+  input,
+  textarea {
+    -webkit-user-select: text;
+    user-select: text;
   }
 }
 

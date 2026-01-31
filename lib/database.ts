@@ -95,13 +95,6 @@ export const getClothingItems = async (): Promise<ClothingItem[]> => {
     }
 
   return data?.map(item => {
-    console.log('Processing item:', {
-      id: item.id,
-      name: item.name,
-      image_urls: item.image_urls,
-      has_images: item.image_urls && item.image_urls.length > 0
-    })
-    
     return {
       id: item.id,
       name: item.name,
@@ -130,10 +123,7 @@ export const getClothingItems = async (): Promise<ClothingItem[]> => {
 }
 
 export const addClothingItem = async (itemData: Omit<ClothingItem, 'id' | 'createdAt' | 'updatedAt' | 'wearCount'>): Promise<ClothingItem | null> => {
-  console.log('addClothingItem called with:', itemData)
-
   if (!isSupabaseConfigured()) {
-    console.log('Supabase not configured, simulating item addition')
     // Simulate adding to mock data
     const newItem: ClothingItem = {
       id: generateId(),
@@ -143,11 +133,9 @@ export const addClothingItem = async (itemData: Omit<ClothingItem, 'id' | 'creat
       updatedAt: new Date()
     }
     mockItems.unshift(newItem) // Add to beginning of array
-    console.log('Mock item added:', newItem)
     return newItem
   }
 
-  console.log('Using Supabase for item addition')
   const userId = await getCurrentUserId()
   const now = new Date().toISOString()
 
@@ -179,21 +167,11 @@ export const addClothingItem = async (itemData: Omit<ClothingItem, 'id' | 'creat
 
   if (itemError) {
     console.error('Error adding clothing item:', itemError)
-    console.error('Item data that failed:', {
-      name: itemData.name,
-      category: itemData.category,
-      image_urls: itemData.images,
-      user_id: userId
-    })
     return null
   }
 
-  console.log('Item inserted successfully:', item)
-  console.log('Item image_urls from database:', item.image_urls)
-
   // Add tags if provided
   if (itemData.tags && itemData.tags.length > 0) {
-    console.log('Adding tags:', itemData.tags)
     await addTagsToItem(item.id, itemData.tags)
   }
 
@@ -218,14 +196,11 @@ export const addClothingItem = async (itemData: Omit<ClothingItem, 'id' | 'creat
     updatedAt: new Date(item.updated_at)
   }
 
-  console.log('Returning result:', result)
-  console.log('Result images:', result.images)
   return result
 }
 
 export const updateClothingItem = async (id: string, updates: Partial<ClothingItem>): Promise<ClothingItem | null> => {
   if (!isSupabaseConfigured()) {
-    console.log('Supabase not configured, simulating item update')
     const itemIndex = mockItems.findIndex(item => item.id === id)
     if (itemIndex !== -1) {
       mockItems[itemIndex] = { ...mockItems[itemIndex], ...updates, updatedAt: new Date() }
@@ -304,7 +279,6 @@ export const updateClothingItem = async (id: string, updates: Partial<ClothingIt
 
 export const deleteClothingItem = async (id: string): Promise<boolean> => {
   if (!isSupabaseConfigured()) {
-    console.log('Supabase not configured, simulating item deletion')
     const itemIndex = mockItems.findIndex(item => item.id === id)
     if (itemIndex !== -1) {
       mockItems.splice(itemIndex, 1)
@@ -585,6 +559,91 @@ export const addOutfit = async (outfitData: Omit<Outfit, 'id' | 'createdAt' | 'u
     createdAt: new Date(outfit.created_at),
     updatedAt: new Date(outfit.updated_at)
   }
+}
+
+export const updateOutfit = async (id: string, updates: Partial<Outfit>): Promise<Outfit | null> => {
+  const userId = await getCurrentUserId()
+  const now = new Date().toISOString()
+
+  const { data, error } = await supabase
+    .from('outfits')
+    .update({
+      name: updates.name,
+      description: updates.description || null,
+      is_favorite: updates.isFavorite,
+      updated_at: now
+    })
+    .eq('id', id)
+    .eq('user_id', userId)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error updating outfit:', error)
+    return null
+  }
+
+  // Update items if provided
+  if (updates.items !== undefined) {
+    // Remove existing items
+    await supabase
+      .from('outfit_items')
+      .delete()
+      .eq('outfit_id', id)
+
+    // Add new items
+    for (const itemId of updates.items) {
+      await supabase
+        .from('outfit_items')
+        .insert({
+          id: generateId(),
+          outfit_id: id,
+          item_id: itemId,
+          created_at: now
+        })
+    }
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description || undefined,
+    items: updates.items || [],
+    tags: updates.tags || [],
+    isFavorite: data.is_favorite,
+    createdAt: new Date(data.created_at),
+    updatedAt: new Date(data.updated_at)
+  }
+}
+
+export const deleteOutfit = async (id: string): Promise<boolean> => {
+  const userId = await getCurrentUserId()
+
+  // Delete associated outfit items
+  await supabase
+    .from('outfit_items')
+    .delete()
+    .eq('outfit_id', id)
+
+  // Delete associated outfit tags
+  await supabase
+    .from('outfit_tags')
+    .delete()
+    .eq('outfit_id', id)
+
+  // Delete the outfit
+  const { error } = await supabase
+    .from('outfits')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', userId)
+
+  if (error) {
+    console.error('Error deleting outfit:', error)
+    return false
+  }
+
+  return true
 }
 
 // Statistics

@@ -11,6 +11,8 @@ import {
   addTag,
   getOutfits,
   addOutfit,
+  updateOutfit,
+  deleteOutfit,
   getWardrobeStats
 } from '@/lib/database'
 import { useAuth } from './AuthContext'
@@ -36,8 +38,10 @@ interface WardrobeContextType {
   deleteItem: (id: string) => Promise<boolean>
   
   addNewTag: (tagData: Omit<Tag, 'id' | 'createdAt' | 'usageCount'>) => Promise<Tag | null>
-  
+
   addNewOutfit: (outfitData: Omit<Outfit, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Outfit | null>
+  updateOutfit: (id: string, updates: Partial<Outfit>) => Promise<Outfit | null>
+  deleteOutfit: (id: string) => Promise<boolean>
 }
 
 const WardrobeContext = createContext<WardrobeContextType | undefined>(undefined)
@@ -125,18 +129,14 @@ export const WardrobeProvider: React.FC<WardrobeProviderProps> = ({ children }) 
   // Item actions
   const addItem = async (itemData: Omit<ClothingItem, 'id' | 'createdAt' | 'updatedAt' | 'wearCount'>) => {
     try {
-      console.log('WardrobeContext addItem called with:', itemData)
       setError(null)
       const newItem = await addClothingItem(itemData)
-      console.log('addClothingItem returned:', newItem)
       if (newItem) {
         setItems(prev => [newItem, ...prev])
-        await refreshStats() // Update stats after adding item
-        await refreshTags() // Refresh tags in case new ones were created
-        console.log('Item added successfully to context')
+        await refreshStats()
+        await refreshTags()
       } else {
-        console.log('addClothingItem returned null - check database logs for details')
-        setError('Failed to add item to database. Check console for details.')
+        setError('Failed to add item to database.')
       }
       return newItem
     } catch (err) {
@@ -170,6 +170,25 @@ export const WardrobeProvider: React.FC<WardrobeProviderProps> = ({ children }) 
       const success = await deleteClothingItem(id)
       if (success) {
         setItems(prev => prev.filter(item => item.id !== id))
+
+        // Clean up outfits that contain this item
+        // If an outfit has no remaining items after removal, delete it
+        const outfitsToCheck = outfits.filter(outfit => outfit.items.includes(id))
+        for (const outfit of outfitsToCheck) {
+          const remainingItems = outfit.items.filter(itemId => itemId !== id)
+          if (remainingItems.length === 0) {
+            // Delete outfit with no items
+            await deleteOutfit(outfit.id)
+            setOutfits(prev => prev.filter(o => o.id !== outfit.id))
+          } else {
+            // Update outfit to remove the deleted item
+            await updateOutfit(outfit.id, { items: remainingItems })
+            setOutfits(prev => prev.map(o =>
+              o.id === outfit.id ? { ...o, items: remainingItems } : o
+            ))
+          }
+        }
+
         await refreshStats() // Update stats after deleting item
       }
       return success
@@ -213,6 +232,36 @@ export const WardrobeProvider: React.FC<WardrobeProviderProps> = ({ children }) 
     }
   }
 
+  const updateOutfitAction = async (id: string, updates: Partial<Outfit>) => {
+    try {
+      setError(null)
+      const updatedOutfit = await updateOutfit(id, updates)
+      if (updatedOutfit) {
+        setOutfits(prev => prev.map(outfit => outfit.id === id ? updatedOutfit : outfit))
+      }
+      return updatedOutfit
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update outfit')
+      console.error('Error updating outfit:', err)
+      return null
+    }
+  }
+
+  const deleteOutfitAction = async (id: string) => {
+    try {
+      setError(null)
+      const success = await deleteOutfit(id)
+      if (success) {
+        setOutfits(prev => prev.filter(outfit => outfit.id !== id))
+      }
+      return success
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete outfit')
+      console.error('Error deleting outfit:', err)
+      return false
+    }
+  }
+
   // Initialize data when user is authenticated
   useEffect(() => {
     if (authLoading) {
@@ -252,8 +301,10 @@ export const WardrobeProvider: React.FC<WardrobeProviderProps> = ({ children }) 
     deleteItem,
     
     addNewTag,
-    
-    addNewOutfit
+
+    addNewOutfit,
+    updateOutfit: updateOutfitAction,
+    deleteOutfit: deleteOutfitAction
   }
 
   return (

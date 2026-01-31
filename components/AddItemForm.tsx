@@ -102,7 +102,7 @@ export default function AddItemForm() {
 
     const fileArray = Array.from(files)
     const imageFiles = fileArray.filter(file => file.type.startsWith('image/'))
-    
+
     if (imageFiles.length === 0) {
       toast.error('Please select image files only')
       return
@@ -126,17 +126,17 @@ export default function AddItemForm() {
 
     // Create previews
     const previews = resizedFiles.map(file => URL.createObjectURL(file))
-    
+
     setImageFiles(prev => [...prev, ...resizedFiles])
     setImagePreviews(prev => [...prev, ...previews])
-    
+
     toast.success(`${resizedFiles.length} image(s) added`)
   }
 
   const removeImage = (index: number) => {
     // Clean up object URL
     URL.revokeObjectURL(imagePreviews[index])
-    
+
     setImageFiles(prev => prev.filter((_, i) => i !== index))
     setImagePreviews(prev => prev.filter((_, i) => i !== index))
     setImages(prev => prev.filter((_, i) => i !== index))
@@ -164,7 +164,7 @@ export default function AddItemForm() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragOver(false)
-    
+
     const files = e.dataTransfer.files
     if (files.length > 0) {
       handleFileSelect(files)
@@ -206,7 +206,7 @@ export default function AddItemForm() {
 
       const uploadedUrls = successfulUploads.map(result => result.url!)
       setImages(uploadedUrls)
-      
+
       if (successfulUploads.length < results.length) {
         toast.success(`${successfulUploads.length} of ${results.length} images uploaded successfully`)
       } else {
@@ -245,11 +245,11 @@ export default function AddItemForm() {
 
   const onSubmit = async (data: AddItemFormData) => {
     setIsSubmitting(true)
-    
+
     try {
       // First, create the item without images
       const tempItemId = generateId()
-      
+
       // Upload images if any
       let uploadedImageUrls: string[] = []
       if (imageFiles.length > 0) {
@@ -270,7 +270,7 @@ export default function AddItemForm() {
         careInstructions: data.careInstructions,
         isFavorite: false
       })
-      
+
       if (newItem) {
         toast.success('Item added successfully!')
         router.push('/wardrobe')
@@ -291,13 +291,13 @@ export default function AddItemForm() {
         {/* Left Column - Photos */}
         <div className="lg:col-span-1">
           <div className="card">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Photos</h3>
-            
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Photos</h3>
+
             <div className="space-y-4">
               {/* Image Previews */}
               {imagePreviews.map((preview, index) => (
                 <div key={index} className="relative">
-                  <div className="aspect-[3/4] bg-gray-200 rounded-lg overflow-hidden">
+                  <div className="aspect-[3/4] bg-gray-100 rounded-xl overflow-hidden shadow-soft ring-1 ring-gray-100">
                     <img
                       src={preview}
                       alt={`Preview ${index + 1}`}
@@ -305,7 +305,7 @@ export default function AddItemForm() {
                     />
                     {/* Upload Progress Overlay */}
                     {uploadProgress[index] && uploadProgress[index].status === 'uploading' && (
-                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
                         <div className="text-white text-center">
                           <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
                           <div className="text-sm">
@@ -316,7 +316,7 @@ export default function AddItemForm() {
                     )}
                     {/* Error Overlay */}
                     {uploadProgress[index] && uploadProgress[index].status === 'error' && (
-                      <div className="absolute inset-0 bg-red-500 bg-opacity-75 flex items-center justify-center">
+                      <div className="absolute inset-0 bg-red-500/75 backdrop-blur-sm flex items-center justify-center">
                         <div className="text-white text-center text-sm">
                           Upload Failed
                         </div>
@@ -326,13 +326,13 @@ export default function AddItemForm() {
                   <button
                     type="button"
                     onClick={() => removeImage(index)}
-                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg backdrop-blur-sm shadow-soft hover:bg-red-600 transition-all duration-200"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 </div>
               ))}
-              
+
               {/* Upload Buttons */}
               <div className="space-y-3">
                 {/* Mobile-first: Camera button is prominent on mobile */}
@@ -340,7 +340,7 @@ export default function AddItemForm() {
                   type="button"
                   onClick={handleCameraClick}
                   disabled={isUploading || isSubmitting}
-                  className="w-full py-4 px-4 bg-wardrobe-600 hover:bg-wardrobe-700 text-white rounded-lg text-base font-medium transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] touch-action-manipulation md:hidden"
+                  className="w-full py-4 px-4 bg-gradient-to-r from-wardrobe-600 to-wardrobe-500 hover:from-wardrobe-700 hover:to-wardrobe-600 text-white rounded-xl text-base font-medium shadow-soft-lg transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] touch-action-manipulation md:hidden active:scale-[0.98]"
                 >
                   <Camera className="h-6 w-6 mr-3" />
                   Take Photo
@@ -351,18 +351,17 @@ export default function AddItemForm() {
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
-                  className={`w-full aspect-[3/4] border-2 border-dashed rounded-lg flex flex-col items-center justify-center transition-colors ${
-                    isDragOver
-                      ? 'border-wardrobe-500 bg-wardrobe-50 text-wardrobe-700'
-                      : 'border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-700'
-                  } ${isUploading || isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  className={`w-full aspect-[3/4] border-2 border-dashed rounded-2xl flex flex-col items-center justify-center transition-all duration-200 ${isDragOver
+                      ? 'border-wardrobe-500 bg-wardrobe-50/80 dark:bg-wardrobe-900/30 text-wardrobe-700 dark:text-wardrobe-400 shadow-inner-soft'
+                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 bg-gray-50/50 dark:bg-gray-800/50'
+                    } ${isUploading || isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                   onClick={!isUploading && !isSubmitting ? handleFileInputClick : undefined}
                 >
                   <Upload className="h-8 w-8 mb-2" />
                   <span className="text-sm font-medium">
                     {isDragOver ? 'Drop images here' : 'Add Photos'}
                   </span>
-                  <span className="text-xs text-gray-500 mt-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                     Click or drag & drop
                   </span>
                 </div>
@@ -372,7 +371,7 @@ export default function AddItemForm() {
                   type="button"
                   onClick={handleCameraClick}
                   disabled={isUploading || isSubmitting}
-                  className="hidden md:flex w-full py-2 px-4 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="hidden md:flex w-full py-2.5 px-4 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 shadow-soft hover:shadow-soft-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Camera className="h-4 w-4 mr-2" />
                   Take Photo
@@ -404,11 +403,11 @@ export default function AddItemForm() {
         <div className="lg:col-span-2 space-y-6">
           {/* Basic Information */}
           <div className="card">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
-            
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Basic Information</h3>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Name *
                 </label>
                 <input
@@ -424,7 +423,7 @@ export default function AddItemForm() {
               </div>
 
               <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Category *
                 </label>
                 <select
@@ -441,7 +440,7 @@ export default function AddItemForm() {
               </div>
 
               <div className="sm:col-span-2">
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Description
                 </label>
                 <textarea
@@ -457,11 +456,11 @@ export default function AddItemForm() {
 
           {/* Details */}
           <div className="card">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Details</h3>
-            
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Details</h3>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="brand" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="brand" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Brand
                 </label>
                 <input
@@ -474,7 +473,7 @@ export default function AddItemForm() {
               </div>
 
               <div>
-                <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="size" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Size
                 </label>
                 <input
@@ -487,7 +486,7 @@ export default function AddItemForm() {
               </div>
 
               <div>
-                <label htmlFor="color" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="color" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Color
                 </label>
                 <input
@@ -500,7 +499,7 @@ export default function AddItemForm() {
               </div>
 
               <div>
-                <label htmlFor="material" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="material" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Material
                 </label>
                 <input
@@ -513,12 +512,12 @@ export default function AddItemForm() {
               </div>
 
               <div>
-                <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Price
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500 sm:text-sm">$</span>
+                    <span className="text-gray-500 dark:text-gray-400 sm:text-sm">$</span>
                   </div>
                   <input
                     type="number"
@@ -533,7 +532,7 @@ export default function AddItemForm() {
               </div>
 
               <div className="sm:col-span-2">
-                <label htmlFor="careInstructions" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="careInstructions" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Care Instructions
                 </label>
                 <textarea
@@ -549,26 +548,26 @@ export default function AddItemForm() {
 
           {/* Tags */}
           <div className="card">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Tags</h3>
-            
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Tags</h3>
+
             <div className="space-y-4">
               {/* Selected Tags */}
               {watchedTags.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Selected Tags
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {watchedTags.map((tag) => (
                       <span
                         key={tag}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-wardrobe-100 text-wardrobe-700"
+                        className="inline-flex items-center px-3 py-1.5 rounded-xl text-sm bg-wardrobe-100 dark:bg-wardrobe-900/30 text-wardrobe-700 dark:text-wardrobe-400 border border-wardrobe-200 dark:border-wardrobe-800 shadow-soft"
                       >
                         {tag}
                         <button
                           type="button"
                           onClick={() => removeTag(tag)}
-                          className="ml-2 text-wardrobe-600 hover:text-wardrobe-800"
+                          className="ml-2 text-wardrobe-600 dark:text-wardrobe-400 hover:text-wardrobe-800 dark:hover:text-wardrobe-300 transition-colors"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -580,7 +579,7 @@ export default function AddItemForm() {
 
               {/* Suggested Tags */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Suggested Tags
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -590,11 +589,10 @@ export default function AddItemForm() {
                       type="button"
                       onClick={() => addTag(tag)}
                       disabled={watchedTags.includes(tag)}
-                      className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                        watchedTags.includes(tag)
-                          ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                      }`}
+                      className={`px-3 py-1.5 rounded-xl text-sm border transition-all duration-200 ${watchedTags.includes(tag)
+                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-700 cursor-not-allowed'
+                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-soft'
+                        }`}
                     >
                       {tag}
                     </button>
@@ -604,7 +602,7 @@ export default function AddItemForm() {
 
               {/* Custom Tag Input */}
               <div>
-                <label htmlFor="customTag" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="customTag" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Add Custom Tag
                 </label>
                 <div className="flex space-x-2">
@@ -658,4 +656,3 @@ export default function AddItemForm() {
     </form>
   )
 }
-

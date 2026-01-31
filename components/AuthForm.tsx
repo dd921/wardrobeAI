@@ -54,16 +54,16 @@ export default function AuthForm({ mode, onSubmit }: AuthFormProps) {
   if (needsConfirmation) {
     return (
       <div className="text-center">
-        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-          <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-green-400 to-green-600 shadow-soft mb-4">
+          <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Check your email</h3>
-        <p className="text-sm text-gray-600 mb-4">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Check your email</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 leading-relaxed">
           We've sent you a confirmation link. Please check your email to verify your account.
         </p>
-        <Link href="/login" className="text-wardrobe-600 hover:text-wardrobe-700 font-medium">
+        <Link href="/login" className="text-wardrobe-600 dark:text-wardrobe-400 hover:text-wardrobe-700 dark:hover:text-wardrobe-300 font-medium transition-colors">
           Return to login
         </Link>
       </div>
@@ -73,13 +73,13 @@ export default function AuthForm({ mode, onSubmit }: AuthFormProps) {
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+        <div className="bg-red-50/80 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm shadow-soft">
           {error}
         </div>
       )}
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Email address
         </label>
         <input
@@ -96,7 +96,7 @@ export default function AuthForm({ mode, onSubmit }: AuthFormProps) {
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Password
         </label>
         <div className="relative">
@@ -111,7 +111,7 @@ export default function AuthForm({ mode, onSubmit }: AuthFormProps) {
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
           >
             {showPassword ? (
               <EyeOff className="h-5 w-5" />
@@ -140,18 +140,18 @@ export default function AuthForm({ mode, onSubmit }: AuthFormProps) {
         )}
       </button>
 
-      <p className="text-center text-sm text-gray-600">
+      <p className="text-center text-sm text-gray-600 dark:text-gray-400">
         {mode === 'login' ? (
           <>
             Don't have an account?{' '}
-            <Link href="/signup" className="text-wardrobe-600 hover:text-wardrobe-700 font-medium">
+            <Link href="/signup" className="text-wardrobe-600 dark:text-wardrobe-400 hover:text-wardrobe-700 dark:hover:text-wardrobe-300 font-medium transition-colors">
               Sign up
             </Link>
           </>
         ) : (
           <>
             Already have an account?{' '}
-            <Link href="/login" className="text-wardrobe-600 hover:text-wardrobe-700 font-medium">
+            <Link href="/login" className="text-wardrobe-600 dark:text-wardrobe-400 hover:text-wardrobe-700 dark:hover:text-wardrobe-300 font-medium transition-colors">
               Sign in
             </Link>
           </>

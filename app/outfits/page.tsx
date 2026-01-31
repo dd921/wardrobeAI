@@ -81,7 +81,7 @@ export default function OutfitsPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-gray-900 dark:to-gray-950">
       <Navigation />
 
       <div className="lg:pl-64">
@@ -89,8 +89,8 @@ export default function OutfitsPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Outfits</h1>
-              <p className="mt-2 text-gray-600">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">Outfits</h1>
+              <p className="mt-2 text-gray-600 dark:text-gray-400 leading-relaxed">
                 Create and manage your favorite outfit combinations.
               </p>
             </div>
@@ -126,18 +126,18 @@ export default function OutfitsPage() {
                 placeholder="Search outfits..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-wardrobe-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 shadow-inner-soft focus:ring-2 focus:ring-wardrobe-500/20 focus:border-wardrobe-500 focus:bg-white dark:focus:bg-gray-700 transition-all duration-200"
               />
             </div>
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-2 cursor-pointer px-4 py-2.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-soft">
               <input
                 type="checkbox"
                 checked={showFavoritesOnly}
                 onChange={(e) => setShowFavoritesOnly(e.target.checked)}
-                className="h-4 w-4 text-wardrobe-600 focus:ring-wardrobe-500 border-gray-300 rounded"
+                className="h-4 w-4 text-wardrobe-600 focus:ring-wardrobe-500 border-gray-300 dark:border-gray-600 rounded"
               />
-              <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'text-red-500' : 'text-gray-400'}`} />
-              <span className="text-sm text-gray-700">Favorites only</span>
+              <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'text-red-500 fill-current' : 'text-gray-400'}`} />
+              <span className="text-sm text-gray-700 dark:text-gray-300">Favorites only</span>
             </label>
           </div>
 
@@ -145,11 +145,11 @@ export default function OutfitsPage() {
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white rounded-lg border animate-pulse">
-                  <div className="aspect-square bg-gray-200" />
+                <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-soft overflow-hidden">
+                  <div className="aspect-square shimmer-loading" />
                   <div className="p-4 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-3/4" />
-                    <div className="h-3 bg-gray-200 rounded w-1/2" />
+                    <div className="h-4 shimmer-loading rounded-lg w-3/4" />
+                    <div className="h-3 shimmer-loading rounded-lg w-1/2" />
                   </div>
                 </div>
               ))}
@@ -167,16 +167,16 @@ export default function OutfitsPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-white rounded-lg border">
-              <div className="text-gray-400 mb-4">
+            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-soft">
+              <div className="text-gray-400 dark:text-gray-500 mb-4">
                 <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                 {outfits.length === 0 ? 'No outfits yet' : 'No matching outfits'}
               </h3>
-              <p className="text-gray-500 mb-4">
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
                 {outfits.length === 0
                   ? 'Create your first outfit by combining items from your wardrobe.'
                   : 'Try adjusting your search or filters.'}

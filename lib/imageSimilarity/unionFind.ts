@@ -23,18 +23,28 @@ export class UnionFind {
 
   /**
    * Find the representative (root) of the set containing x
-   * Uses path compression for efficiency
+   * Uses path compression for efficiency (iterative to avoid stack overflow)
    */
   find(x: string): string {
     if (!this.parent.has(x)) {
       this.makeSet(x);
     }
 
-    if (this.parent.get(x) !== x) {
-      // Path compression: point directly to root
-      this.parent.set(x, this.find(this.parent.get(x)!));
+    // Find root iteratively
+    let root = x;
+    while (this.parent.get(root) !== root) {
+      root = this.parent.get(root)!;
     }
-    return this.parent.get(x)!;
+
+    // Path compression: point all nodes directly to root
+    let current = x;
+    while (this.parent.get(current) !== root) {
+      const next = this.parent.get(current)!;
+      this.parent.set(current, root);
+      current = next;
+    }
+
+    return root;
   }
 
   /**

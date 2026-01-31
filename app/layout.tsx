@@ -4,6 +4,7 @@ import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import { WardrobeProvider } from '@/contexts/WardrobeContext'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -34,13 +35,29 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const theme = localStorage.getItem('theme') || 'system';
+                const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const isDark = theme === 'dark' || (theme === 'system' && systemDark);
+                document.documentElement.classList.add(isDark ? 'dark' : 'light');
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
       <body className={inter.className}>
-        <AuthProvider>
-          <WardrobeProvider>
-            {children}
-          </WardrobeProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <WardrobeProvider>
+              {children}
+            </WardrobeProvider>
+          </AuthProvider>
+        </ThemeProvider>
         <Toaster
           position="top-right"
           toastOptions={{
@@ -69,4 +86,3 @@ export default function RootLayout({
     </html>
   )
 }
-

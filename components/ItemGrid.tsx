@@ -128,7 +128,7 @@ export default function ItemGrid() {
   }
 
   const toggleItemSelection = (itemId: string) => {
-    setSelectedItems(prev => 
+    setSelectedItems(prev =>
       prev.includes(itemId)
         ? prev.filter(id => id !== itemId)
         : [...prev, itemId]
@@ -162,12 +162,12 @@ export default function ItemGrid() {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {[...Array(8)].map((_, i) => (
-          <div key={i} className="bg-white rounded-lg border border-gray-200 overflow-hidden animate-pulse">
-            <div className="aspect-[3/4] bg-gray-200"></div>
+          <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden shadow-soft">
+            <div className="aspect-[3/4] shimmer-loading"></div>
             <div className="p-4 space-y-2">
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+              <div className="h-4 shimmer-loading rounded-lg w-3/4"></div>
+              <div className="h-3 shimmer-loading rounded-lg w-1/2"></div>
+              <div className="h-3 shimmer-loading rounded-lg w-1/3"></div>
             </div>
           </div>
         ))}
@@ -178,7 +178,7 @@ export default function ItemGrid() {
   if (error) {
     return (
       <div className="text-center py-8">
-        <p className="text-red-600">Error loading items: {error}</p>
+        <p className="text-red-600 dark:text-red-400">Error loading items: {error}</p>
       </div>
     )
   }
@@ -186,13 +186,13 @@ export default function ItemGrid() {
   if (items.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="text-gray-400 mb-4">
+        <div className="text-gray-400 dark:text-gray-500 mb-4">
           <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No items found</h3>
-        <p className="text-gray-500 mb-4">Start building your wardrobe by adding your first item.</p>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No items found</h3>
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Start building your wardrobe by adding your first item.</p>
         <Link href="/add-item" className="btn-primary">
           Add Your First Item
         </Link>
@@ -214,12 +214,12 @@ export default function ItemGrid() {
               placeholder="Search by name, brand, color, or tag..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-wardrobe-500 focus:border-wardrobe-500"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800 shadow-inner-soft focus:ring-2 focus:ring-wardrobe-500/20 focus:border-wardrobe-500 focus:bg-white dark:focus:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition-all duration-200"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -230,7 +230,7 @@ export default function ItemGrid() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value as ClothingCategory | 'all')}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-wardrobe-500 focus:border-wardrobe-500 bg-white min-w-[150px]"
+            className="px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 dark:text-gray-100 shadow-soft focus:ring-2 focus:ring-wardrobe-500/20 focus:border-wardrobe-500 min-w-[150px] transition-all duration-200"
           >
             <option value="all">All Categories</option>
             {categories.map(cat => (
@@ -242,7 +242,7 @@ export default function ItemGrid() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-wardrobe-500 focus:border-wardrobe-500 bg-white min-w-[160px]"
+            className="px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 dark:text-gray-100 shadow-soft focus:ring-2 focus:ring-wardrobe-500/20 focus:border-wardrobe-500 min-w-[160px] transition-all duration-200"
           >
             {sortOptions.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -252,11 +252,10 @@ export default function ItemGrid() {
           {/* Filter Toggle Button */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`px-4 py-2 border rounded-lg flex items-center gap-2 transition-colors ${
-              showFilters || hasActiveFilters
-                ? 'border-wardrobe-500 bg-wardrobe-50 text-wardrobe-700'
-                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-            }`}
+            className={`px-4 py-2.5 border rounded-xl flex items-center gap-2 transition-all duration-200 shadow-soft ${showFilters || hasActiveFilters
+                ? 'border-wardrobe-500 bg-wardrobe-50 dark:bg-wardrobe-900/30 text-wardrobe-700 dark:text-wardrobe-400'
+                : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+              }`}
           >
             <SlidersHorizontal className="h-4 w-4" />
             <span className="hidden sm:inline">Filters</span>
@@ -270,7 +269,7 @@ export default function ItemGrid() {
 
         {/* Expanded Filters */}
         {showFilters && (
-          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4">
+          <div className="p-4 bg-gray-50/80 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-inner-soft space-y-4">
             {/* Favorites Toggle */}
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -278,16 +277,16 @@ export default function ItemGrid() {
                   type="checkbox"
                   checked={showFavoritesOnly}
                   onChange={(e) => setShowFavoritesOnly(e.target.checked)}
-                  className="h-4 w-4 text-wardrobe-600 focus:ring-wardrobe-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-wardrobe-600 focus:ring-wardrobe-500 border-gray-300 dark:border-gray-600 rounded"
                 />
-                <span className="text-sm font-medium text-gray-700">Show favorites only</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Show favorites only</span>
                 <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'text-red-500 fill-current' : 'text-gray-400'}`} />
               </label>
 
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
-                  className="text-sm text-wardrobe-600 hover:text-wardrobe-700 font-medium"
+                  className="text-sm text-wardrobe-600 dark:text-wardrobe-400 hover:text-wardrobe-700 dark:hover:text-wardrobe-300 font-medium transition-colors"
                 >
                   Clear all filters
                 </button>
@@ -297,17 +296,16 @@ export default function ItemGrid() {
             {/* Tags */}
             {allTags.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Filter by tags</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filter by tags</label>
                 <div className="flex flex-wrap gap-2">
                   {allTags.map(tag => (
                     <button
                       key={tag}
                       onClick={() => toggleTag(tag)}
-                      className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                        selectedTags.includes(tag)
-                          ? 'bg-wardrobe-600 text-white border-wardrobe-600'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
-                      }`}
+                      className={`px-3 py-1.5 rounded-lg text-sm border transition-all duration-200 ${selectedTags.includes(tag)
+                          ? 'bg-wardrobe-600 text-white border-wardrobe-600 shadow-soft'
+                          : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:shadow-soft'
+                        }`}
                     >
                       {tag}
                     </button>
@@ -319,7 +317,7 @@ export default function ItemGrid() {
         )}
 
         {/* Results Count */}
-        <div className="flex items-center justify-between text-sm text-gray-600">
+        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
           <span>
             Showing {filteredItems.length} of {items.length} item{items.length !== 1 ? 's' : ''}
           </span>
@@ -329,10 +327,10 @@ export default function ItemGrid() {
               {selectedTags.map(tag => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-wardrobe-100 text-wardrobe-700 rounded-full text-xs"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-wardrobe-100 dark:bg-wardrobe-900/30 text-wardrobe-700 dark:text-wardrobe-400 rounded-lg text-xs border border-wardrobe-200 dark:border-wardrobe-800"
                 >
                   {tag}
-                  <button onClick={() => toggleTag(tag)} className="hover:text-wardrobe-900">
+                  <button onClick={() => toggleTag(tag)} className="hover:text-wardrobe-900 dark:hover:text-wardrobe-300 transition-colors">
                     <X className="h-3 w-3" />
                   </button>
                 </span>
@@ -345,11 +343,11 @@ export default function ItemGrid() {
       {/* No Results Message */}
       {filteredItems.length === 0 && items.length > 0 && (
         <div className="text-center py-12">
-          <div className="text-gray-400 mb-4">
+          <div className="text-gray-400 dark:text-gray-500 mb-4">
             <Search className="mx-auto h-12 w-12" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No matching items</h3>
-          <p className="text-gray-500 mb-4">Try adjusting your search or filters.</p>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No matching items</h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Try adjusting your search or filters.</p>
           <button onClick={clearFilters} className="btn-secondary">
             Clear Filters
           </button>
@@ -360,136 +358,133 @@ export default function ItemGrid() {
       {filteredItems.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredItems.map((item) => (
-        <div
-          key={item.id}
-          className="group relative bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200"
-          onMouseEnter={() => setHoveredItem(item.id)}
-          onMouseLeave={() => setHoveredItem(null)}
-        >
-          {/* Selection Checkbox */}
-          <div className="absolute top-3 left-3 z-10">
-            <input
-              type="checkbox"
-              checked={selectedItems.includes(item.id)}
-              onChange={() => toggleItemSelection(item.id)}
-              className="h-4 w-4 text-wardrobe-600 focus:ring-wardrobe-500 border-gray-300 rounded"
-            />
-          </div>
-
-          {/* Favorite Button */}
-          <button
-            onClick={() => toggleFavorite(item.id)}
-            className={`absolute top-3 right-3 z-10 p-1 rounded-full transition-all duration-200 ${
-              item.isFavorite 
-                ? 'bg-red-500 text-white' 
-                : 'bg-white/80 text-gray-400 hover:bg-red-500 hover:text-white'
-            }`}
-          >
-            <Heart className={`h-4 w-4 ${item.isFavorite ? 'fill-current' : ''}`} />
-          </button>
-
-          {/* Image */}
-          <div className="aspect-[3/4] bg-gray-200 relative overflow-hidden">
-            {item.images && item.images.length > 0 ? (
-              <img
-                src={item.images[0]}
-                alt={item.name}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  // Fallback to placeholder if image fails to load
-                  const target = e.target as HTMLImageElement
-                  target.style.display = 'none'
-                  const parent = target.parentElement
-                  if (parent) {
-                    parent.innerHTML = '<div class="w-full h-full flex items-center justify-center"><span class="text-4xl text-gray-400">👕</span></div>'
-                  }
-                }}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-4xl text-gray-400">👕</span>
+            <div
+              key={item.id}
+              className="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden shadow-soft hover:shadow-soft-lg hover:-translate-y-1 transition-all duration-200"
+              onMouseEnter={() => setHoveredItem(item.id)}
+              onMouseLeave={() => setHoveredItem(null)}
+            >
+              {/* Selection Checkbox */}
+              <div className="absolute top-3 left-3 z-10">
+                <input
+                  type="checkbox"
+                  checked={selectedItems.includes(item.id)}
+                  onChange={() => toggleItemSelection(item.id)}
+                  className="h-4 w-4 text-wardrobe-600 focus:ring-wardrobe-500 border-gray-300 rounded shadow-soft"
+                />
               </div>
-            )}
-            
-            {/* Hover Overlay */}
-            {hoveredItem === item.id && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center space-x-2">
-                <Link
-                  href={`/wardrobe/${item.id}`}
-                  className="p-2 bg-white rounded-full text-gray-900 hover:bg-gray-100 transition-colors"
-                >
-                  <Eye className="h-4 w-4" />
-                </Link>
-                <Link
-                  href={`/wardrobe/${item.id}/edit`}
-                  className="p-2 bg-white rounded-full text-gray-900 hover:bg-gray-100 transition-colors"
-                >
-                  <Edit className="h-4 w-4" />
-                </Link>
-                <button 
-                  onClick={() => handleDelete(item.id)}
-                  className="p-2 bg-red-500 rounded-full text-white hover:bg-red-600 transition-colors"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-          </div>
 
-          {/* Item Info */}
-          <div className="p-4">
-            <div className="flex items-start justify-between mb-2">
-              <h3 className="font-medium text-gray-900 text-sm leading-tight">
-                {item.name}
-              </h3>
-              <button className="text-gray-400 hover:text-gray-600">
-                <MoreVertical className="h-4 w-4" />
+              {/* Favorite Button */}
+              <button
+                onClick={() => toggleFavorite(item.id)}
+                className={`absolute top-3 right-3 z-10 p-1.5 rounded-xl backdrop-blur-sm shadow-soft transition-all duration-200 ${item.isFavorite
+                    ? 'bg-red-500 text-white'
+                    : 'bg-white/80 text-gray-400 hover:bg-red-500 hover:text-white'
+                  }`}
+              >
+                <Heart className={`h-4 w-4 ${item.isFavorite ? 'fill-current' : ''}`} />
               </button>
+
+              {/* Image */}
+              <div className="aspect-[3/4] bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
+                {item.images && item.images.length > 0 ? (
+                  <img
+                    src={item.images[0]}
+                    alt={item.name}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      target.style.display = 'none'
+                      const parent = target.parentElement
+                      if (parent) {
+                        parent.innerHTML = '<div class="w-full h-full flex items-center justify-center"><span class="text-4xl text-gray-400">👕</span></div>'
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-4xl text-gray-400">👕</span>
+                  </div>
+                )}
+
+                {/* Hover Overlay */}
+                {hoveredItem === item.id && (
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent flex items-center justify-center space-x-2">
+                    <Link
+                      href={`/wardrobe/${item.id}`}
+                      className="p-2.5 bg-white rounded-xl text-gray-900 hover:bg-gray-100 shadow-soft hover:scale-110 transition-all duration-200"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                    <Link
+                      href={`/wardrobe/${item.id}/edit`}
+                      className="p-2.5 bg-white rounded-xl text-gray-900 hover:bg-gray-100 shadow-soft hover:scale-110 transition-all duration-200"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="p-2.5 bg-red-500 rounded-xl text-white hover:bg-red-600 shadow-soft hover:scale-110 transition-all duration-200"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Item Info */}
+              <div className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight">
+                    {item.name}
+                  </h3>
+                  <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                    <MoreVertical className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">
+                  {item.description}
+                </p>
+
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-lg">
+                    {item.category}
+                  </span>
+                  {item.price && (
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      {formatPrice(item.price)}
+                    </span>
+                  )}
+                </div>
+
+                {/* Tags */}
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {item.tags.slice(0, 3).map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-block px-2 py-1 text-xs bg-wardrobe-50 dark:bg-wardrobe-900/30 text-wardrobe-700 dark:text-wardrobe-400 rounded-lg border border-wardrobe-100 dark:border-wardrobe-800"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                  {item.tags.length > 3 && (
+                    <span className="inline-block px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg">
+                      +{item.tags.length - 3}
+                    </span>
+                  )}
+                </div>
+
+                {/* Additional Info */}
+                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                  <span>Worn {item.wearCount} times</span>
+                  <span>{formatRelativeDate(item.lastWorn || item.createdAt)}</span>
+                </div>
+              </div>
             </div>
-            
-            <p className="text-xs text-gray-500 mb-3 line-clamp-2">
-              {item.description}
-            </p>
-            
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded">
-                {item.category}
-              </span>
-              {item.price && (
-                <span className="text-sm font-semibold text-gray-900">
-                  {formatPrice(item.price)}
-                </span>
-              )}
-            </div>
-            
-            {/* Tags */}
-            <div className="flex flex-wrap gap-1 mb-3">
-              {item.tags.slice(0, 3).map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-block px-2 py-1 text-xs bg-wardrobe-100 text-wardrobe-700 rounded-full"
-                >
-                  {tag}
-                </span>
-              ))}
-              {item.tags.length > 3 && (
-                <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                  +{item.tags.length - 3}
-                </span>
-              )}
-            </div>
-            
-            {/* Additional Info */}
-            <div className="flex items-center justify-between text-xs text-gray-500">
-              <span>Worn {item.wearCount} times</span>
-              <span>{formatRelativeDate(item.lastWorn || item.createdAt)}</span>
-            </div>
-          </div>
-        </div>
-      ))}
+          ))}
         </div>
       )}
     </div>
   )
 }
-

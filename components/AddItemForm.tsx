@@ -1,14 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Upload, X, Plus, Camera } from 'lucide-react'
+import { Upload, X, Plus, Camera, Loader2 } from 'lucide-react'
 import { ClothingCategory } from '@/types/wardrobe'
 import { generateId } from '@/lib/utils'
 import { useWardrobe } from '@/contexts/WardrobeContext'
+import { uploadImages, resizeImage, ImageUploadProgress } from '@/lib/imageUpload'
 import toast from 'react-hot-toast'
 
 const addItemSchema = z.object({
@@ -48,8 +49,16 @@ export default function AddItemForm() {
   const router = useRouter()
   const { addItem } = useWardrobe()
   const [images, setImages] = useState<string[]>([])
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const [uploadProgress, setUploadProgress] = useState<ImageUploadProgress[]>([])
+  const [isUploading, setIsUploading] = useState(false)
   const [customTags, setCustomTags] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const dropZoneRef = useRef<HTMLDivElement>(null)
 
   const {
     register,
@@ -67,15 +76,130 @@ export default function AddItemForm() {
 
   const watchedTags = watch('tags')
 
-  const addImage = () => {
-    // In a real app, this would handle file upload
-    const newImageId = generateId()
-    setImages(prev => [...prev, newImageId])
-    toast.success('Image added (mock)')
+  const handleFileSelect = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
+
+    const fileArray = Array.from(files)
+    const imageFiles = fileArray.filter(file => file.type.startsWith('image/'))
+    
+    if (imageFiles.length === 0) {
+      toast.error('Please select image files only')
+      return
+    }
+
+    if (imageFiles.length !== fileArray.length) {
+      toast.error('Some files were not images and were skipped')
+    }
+
+    // Resize images before adding
+    const resizedFiles: File[] = []
+    for (const file of imageFiles) {
+      try {
+        const resizedFile = await resizeImage(file, 1200, 1200, 0.8)
+        resizedFiles.push(resizedFile)
+      } catch (error) {
+        console.error('Error resizing image:', error)
+        resizedFiles.push(file) // Use original if resize fails
+      }
+    }
+
+    // Create previews
+    const previews = resizedFiles.map(file => URL.createObjectURL(file))
+    
+    setImageFiles(prev => [...prev, ...resizedFiles])
+    setImagePreviews(prev => [...prev, ...previews])
+    
+    toast.success(`${resizedFiles.length} image(s) added`)
   }
 
-  const removeImage = (imageId: string) => {
-    setImages(prev => prev.filter(id => id !== imageId))
+  const removeImage = (index: number) => {
+    // Clean up object URL
+    URL.revokeObjectURL(imagePreviews[index])
+    
+    setImageFiles(prev => prev.filter((_, i) => i !== index))
+    setImagePreviews(prev => prev.filter((_, i) => i !== index))
+    setImages(prev => prev.filter((_, i) => i !== index))
+    setUploadProgress(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleFileInputClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleCameraClick = () => {
+    cameraInputRef.current?.click()
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    
+    const files = e.dataTransfer.files
+    if (files.length > 0) {
+      handleFileSelect(files)
+    }
+  }
+
+  const uploadImagesToStorage = async (itemId: string) => {
+    if (imageFiles.length === 0) return []
+
+    setIsUploading(true)
+    setUploadProgress(imageFiles.map(file => ({
+      file,
+      progress: 0,
+      status: 'uploading'
+    })))
+
+    try {
+      const results = await uploadImages(
+        imageFiles,
+        itemId,
+        (progress) => {
+          setUploadProgress(progress)
+        }
+      )
+
+      const successfulUploads = results.filter(result => result.success && result.url)
+      const failedUploads = results.filter(result => !result.success)
+
+      if (failedUploads.length > 0) {
+        console.error('Some uploads failed:', failedUploads)
+        const errorMessages = failedUploads.map(result => result.error).join(', ')
+        toast.error(`Some images failed to upload: ${errorMessages}`)
+      }
+
+      if (successfulUploads.length === 0) {
+        toast.error('All image uploads failed. Please check your storage configuration.')
+        return []
+      }
+
+      const uploadedUrls = successfulUploads.map(result => result.url!)
+      setImages(uploadedUrls)
+      
+      if (successfulUploads.length < results.length) {
+        toast.success(`${successfulUploads.length} of ${results.length} images uploaded successfully`)
+      } else {
+        toast.success('All images uploaded successfully')
+      }
+
+      return uploadedUrls
+    } catch (error) {
+      console.error('Error uploading images:', error)
+      toast.error(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      return []
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   const addTag = (tag: string) => {
@@ -102,12 +226,21 @@ export default function AddItemForm() {
     setIsSubmitting(true)
     
     try {
+      // First, create the item without images
+      const tempItemId = generateId()
+      
+      // Upload images if any
+      let uploadedImageUrls: string[] = []
+      if (imageFiles.length > 0) {
+        uploadedImageUrls = await uploadImagesToStorage(tempItemId)
+      }
+
       const newItem = await addItem({
         name: data.name,
         description: data.description,
         category: data.category,
         tags: data.tags,
-        images: images, // TODO: Implement actual image upload
+        images: uploadedImageUrls,
         brand: data.brand,
         size: data.size,
         color: data.color,
@@ -140,14 +273,38 @@ export default function AddItemForm() {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Photos</h3>
             
             <div className="space-y-4">
-              {images.map((imageId) => (
-                <div key={imageId} className="relative">
-                  <div className="aspect-[3/4] bg-gray-200 rounded-lg flex items-center justify-center">
-                    <span className="text-4xl text-gray-400">📷</span>
+              {/* Image Previews */}
+              {imagePreviews.map((preview, index) => (
+                <div key={index} className="relative">
+                  <div className="aspect-[3/4] bg-gray-200 rounded-lg overflow-hidden">
+                    <img
+                      src={preview}
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Upload Progress Overlay */}
+                    {uploadProgress[index] && uploadProgress[index].status === 'uploading' && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <div className="text-white text-center">
+                          <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                          <div className="text-sm">
+                            {uploadProgress[index].progress}%
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {/* Error Overlay */}
+                    {uploadProgress[index] && uploadProgress[index].status === 'error' && (
+                      <div className="absolute inset-0 bg-red-500 bg-opacity-75 flex items-center justify-center">
+                        <div className="text-white text-center text-sm">
+                          Upload Failed
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <button
                     type="button"
-                    onClick={() => removeImage(imageId)}
+                    onClick={() => removeImage(index)}
                     className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                   >
                     <X className="h-4 w-4" />
@@ -155,24 +312,69 @@ export default function AddItemForm() {
                 </div>
               ))}
               
+              {/* Upload Buttons */}
               <div className="space-y-3">
+                {/* Mobile-first: Camera button is prominent on mobile */}
                 <button
                   type="button"
-                  onClick={addImage}
-                  className="w-full aspect-[3/4] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-600 hover:border-gray-400 hover:text-gray-700 transition-colors"
+                  onClick={handleCameraClick}
+                  disabled={isUploading || isSubmitting}
+                  className="w-full py-4 px-4 bg-wardrobe-600 hover:bg-wardrobe-700 text-white rounded-lg text-base font-medium transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] touch-action-manipulation md:hidden"
+                >
+                  <Camera className="h-6 w-6 mr-3" />
+                  Take Photo
+                </button>
+
+                <div
+                  ref={dropZoneRef}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`w-full aspect-[3/4] border-2 border-dashed rounded-lg flex flex-col items-center justify-center transition-colors ${
+                    isDragOver
+                      ? 'border-wardrobe-500 bg-wardrobe-50 text-wardrobe-700'
+                      : 'border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-700'
+                  } ${isUploading || isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  onClick={!isUploading && !isSubmitting ? handleFileInputClick : undefined}
                 >
                   <Upload className="h-8 w-8 mb-2" />
-                  <span className="text-sm font-medium">Add Photo</span>
-                </button>
-                
+                  <span className="text-sm font-medium">
+                    {isDragOver ? 'Drop images here' : 'Add Photos'}
+                  </span>
+                  <span className="text-xs text-gray-500 mt-1">
+                    Click or drag & drop
+                  </span>
+                </div>
+
+                {/* Desktop camera button (smaller) */}
                 <button
                   type="button"
-                  className="w-full py-2 px-4 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center"
+                  onClick={handleCameraClick}
+                  disabled={isUploading || isSubmitting}
+                  className="hidden md:flex w-full py-2 px-4 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Camera className="h-4 w-4 mr-2" />
                   Take Photo
                 </button>
               </div>
+
+              {/* Hidden File Inputs */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => handleFileSelect(e.target.files)}
+                className="hidden"
+              />
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => handleFileSelect(e.target.files)}
+                className="hidden"
+              />
             </div>
           </div>
         </div>
@@ -415,10 +617,19 @@ export default function AddItemForm() {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploading}
               className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Adding...' : 'Add Item'}
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading Images...
+                </>
+              ) : isSubmitting ? (
+                'Adding Item...'
+              ) : (
+                'Add Item'
+              )}
             </button>
           </div>
         </div>

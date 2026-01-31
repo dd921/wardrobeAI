@@ -3,18 +3,21 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { 
-  Home, 
-  Shirt, 
-  Tags, 
-  Heart, 
-  BarChart3, 
-  Settings, 
+import {
+  Home,
+  Shirt,
+  Tags,
+  Heart,
+  BarChart3,
+  Settings,
   Plus,
   Menu,
-  X
+  X,
+  LogOut,
+  User
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
@@ -27,7 +30,9 @@ const navigation = [
 
 export default function Navigation() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const pathname = usePathname()
+  const { user, signOut } = useAuth()
 
   return (
     <>
@@ -47,8 +52,8 @@ export default function Navigation() {
               <X className="h-6 w-6" />
             </button>
           </div>
-          <nav className="px-4 pb-4">
-            <ul className="space-y-2">
+          <nav className="px-4 pb-4 flex flex-col h-[calc(100%-4rem)]">
+            <ul className="space-y-2 flex-1">
               {navigation.map((item) => (
                 <li key={item.name}>
                   <Link
@@ -67,6 +72,34 @@ export default function Navigation() {
                 </li>
               ))}
             </ul>
+
+            {/* Mobile User Menu */}
+            {user && (
+              <div className="pt-4 border-t border-gray-200">
+                <div className="flex items-center px-3 py-2">
+                  <div className="flex-shrink-0">
+                    <div className="h-8 w-8 rounded-full bg-wardrobe-100 flex items-center justify-center">
+                      <User className="h-4 w-4 text-wardrobe-600" />
+                    </div>
+                  </div>
+                  <div className="ml-3 min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-700 truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setSidebarOpen(false)
+                    signOut()
+                  }}
+                  className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors min-h-[44px]"
+                >
+                  <LogOut className="mr-3 h-5 w-5 text-gray-400" />
+                  Sign out
+                </button>
+              </div>
+            )}
           </nav>
         </div>
       </div>
@@ -99,7 +132,7 @@ export default function Navigation() {
                   ))}
                 </ul>
               </li>
-              <li className="mt-auto">
+              <li className="mt-auto space-y-3">
                 <Link
                   href="/add-item"
                   className="flex items-center justify-center w-full px-3 py-2 text-sm font-medium text-white bg-wardrobe-600 rounded-lg hover:bg-wardrobe-700 transition-colors"
@@ -107,6 +140,31 @@ export default function Navigation() {
                   <Plus className="mr-2 h-4 w-4" />
                   Add Item
                 </Link>
+
+                {/* User Menu */}
+                {user && (
+                  <div className="pt-3 border-t border-gray-200">
+                    <div className="flex items-center px-3 py-2">
+                      <div className="flex-shrink-0">
+                        <div className="h-8 w-8 rounded-full bg-wardrobe-100 flex items-center justify-center">
+                          <User className="h-4 w-4 text-wardrobe-600" />
+                        </div>
+                      </div>
+                      <div className="ml-3 min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-700 truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => signOut()}
+                      className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                    >
+                      <LogOut className="mr-3 h-5 w-5 text-gray-400" />
+                      Sign out
+                    </button>
+                  </div>
+                )}
               </li>
             </ul>
           </nav>

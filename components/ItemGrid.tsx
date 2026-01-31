@@ -119,9 +119,26 @@ export default function ItemGrid() {
 
           {/* Image */}
           <div className="aspect-[3/4] bg-gray-200 relative overflow-hidden">
-            <div className="w-full h-full flex items-center justify-center">
-              <span className="text-4xl text-gray-400">👕</span>
-            </div>
+            {item.images && item.images.length > 0 ? (
+              <img
+                src={item.images[0]}
+                alt={item.name}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback to placeholder if image fails to load
+                  const target = e.target as HTMLImageElement
+                  target.style.display = 'none'
+                  const parent = target.parentElement
+                  if (parent) {
+                    parent.innerHTML = '<div class="w-full h-full flex items-center justify-center"><span class="text-4xl text-gray-400">👕</span></div>'
+                  }
+                }}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-4xl text-gray-400">👕</span>
+              </div>
+            )}
             
             {/* Hover Overlay */}
             {hoveredItem === item.id && (

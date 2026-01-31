@@ -133,11 +133,13 @@ export const WardrobeProvider: React.FC<WardrobeProviderProps> = ({ children }) 
         await refreshTags() // Refresh tags in case new ones were created
         console.log('Item added successfully to context')
       } else {
-        console.log('addClothingItem returned null')
+        console.log('addClothingItem returned null - check database logs for details')
+        setError('Failed to add item to database. Check console for details.')
       }
       return newItem
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add item')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add item'
+      setError(errorMessage)
       console.error('Error adding item:', err)
       return null
     }

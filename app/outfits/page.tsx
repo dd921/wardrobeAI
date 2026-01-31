@@ -1,24 +1,213 @@
+'use client'
+
+import { useState, useCallback } from 'react'
 import Navigation from '@/components/Navigation'
+import OutfitCard from '@/components/OutfitCard'
+import CreateOutfitModal from '@/components/CreateOutfitModal'
+import OutfitSuggestions from '@/components/OutfitSuggestions'
+import { useWardrobe } from '@/contexts/WardrobeContext'
+import { Plus, Search, Heart } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { ClothingItem } from '@/types/wardrobe'
+
+interface OutfitSuggestion {
+  id: string
+  name: string
+  items: ClothingItem[]
+  reason: string
+}
 
 export default function OutfitsPage() {
+  const { outfits, items, addNewOutfit, loading } = useWardrobe()
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+  const [suggestedItems, setSuggestedItems] = useState<ClothingItem[] | undefined>()
+  const [suggestedName, setSuggestedName] = useState<string | undefined>()
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const handleCreateOutfit = async (outfitData: {
+    name: string
+    description?: string
+    items: string[]
+    tags: string[]
+    isFavorite: boolean
+  }) => {
+    const result = await addNewOutfit(outfitData)
+    if (result) {
+      toast.success('Outfit created!')
+      setShowCreateModal(false)
+      setSuggestedItems(undefined)
+      setSuggestedName(undefined)
+    } else {
+      toast.error('Failed to create outfit')
+    }
+  }
+
+  const handleSelectSuggestion = (suggestion: OutfitSuggestion) => {
+    setSuggestedItems(suggestion.items)
+    setSuggestedName(suggestion.name)
+    setShowCreateModal(true)
+  }
+
+  const handleToggleFavorite = async (outfitId: string) => {
+    // TODO: Implement outfit favorite toggle when we add updateOutfit to context
+    toast.success('Favorite toggled')
+  }
+
+  const handleDeleteOutfit = async (outfitId: string) => {
+    if (confirm('Are you sure you want to delete this outfit?')) {
+      // TODO: Implement outfit deletion when we add deleteOutfit to context
+      toast.success('Outfit deleted')
+    }
+  }
+
+  const handleRefreshSuggestions = useCallback(() => {
+    setRefreshKey(prev => prev + 1)
+  }, [])
+
+  // Filter outfits
+  const filteredOutfits = outfits.filter(outfit => {
+    if (showFavoritesOnly && !outfit.isFavorite) return false
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      return (
+        outfit.name.toLowerCase().includes(query) ||
+        outfit.description?.toLowerCase().includes(query) ||
+        outfit.tags.some(tag => tag.toLowerCase().includes(query))
+      )
+    }
+    return true
+  })
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      
+
       <div className="lg:pl-64">
         <div className="px-4 py-8 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Outfits</h1>
+              <p className="mt-2 text-gray-600">
+                Create and manage your favorite outfit combinations.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setSuggestedItems(undefined)
+                setSuggestedName(undefined)
+                setShowCreateModal(true)
+              }}
+              className="mt-4 sm:mt-0 btn-primary flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Create Outfit
+            </button>
+          </div>
+
+          {/* Outfit Suggestions */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Outfits</h1>
-            <p className="mt-2 text-gray-600">
-              Create and manage your favorite outfit combinations.
-            </p>
+            <OutfitSuggestions
+              key={refreshKey}
+              items={items}
+              onSelectSuggestion={handleSelectSuggestion}
+              onRefresh={handleRefreshSuggestions}
+            />
           </div>
-          
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-gray-500">Outfit management coming soon...</p>
+
+          {/* Search and Filters */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search outfits..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-wardrobe-500"
+              />
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showFavoritesOnly}
+                onChange={(e) => setShowFavoritesOnly(e.target.checked)}
+                className="h-4 w-4 text-wardrobe-600 focus:ring-wardrobe-500 border-gray-300 rounded"
+              />
+              <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'text-red-500' : 'text-gray-400'}`} />
+              <span className="text-sm text-gray-700">Favorites only</span>
+            </label>
           </div>
+
+          {/* Outfits Grid */}
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-white rounded-lg border animate-pulse">
+                  <div className="aspect-square bg-gray-200" />
+                  <div className="p-4 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-3/4" />
+                    <div className="h-3 bg-gray-200 rounded w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredOutfits.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredOutfits.map(outfit => (
+                <OutfitCard
+                  key={outfit.id}
+                  outfit={outfit}
+                  items={items}
+                  onToggleFavorite={handleToggleFavorite}
+                  onDelete={handleDeleteOutfit}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-white rounded-lg border">
+              <div className="text-gray-400 mb-4">
+                <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {outfits.length === 0 ? 'No outfits yet' : 'No matching outfits'}
+              </h3>
+              <p className="text-gray-500 mb-4">
+                {outfits.length === 0
+                  ? 'Create your first outfit by combining items from your wardrobe.'
+                  : 'Try adjusting your search or filters.'}
+              </p>
+              {outfits.length === 0 && (
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="btn-primary"
+                >
+                  Create Your First Outfit
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Create Outfit Modal */}
+      {showCreateModal && (
+        <CreateOutfitModal
+          items={items}
+          onClose={() => {
+            setShowCreateModal(false)
+            setSuggestedItems(undefined)
+            setSuggestedName(undefined)
+          }}
+          onSave={handleCreateOutfit}
+          suggestedItems={suggestedItems}
+          suggestedName={suggestedName}
+        />
+      )}
     </div>
   )
 }

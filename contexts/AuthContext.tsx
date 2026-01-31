@@ -32,18 +32,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
   const router = useRouter()
 
+  // Handle hydration mismatch
   useEffect(() => {
-    // Get initial session
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    // Get initial session with timeout
     const initializeAuth = async () => {
+      console.log('[Auth] Starting initialization...')
       try {
-        const currentSession = await getSession()
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise<null>((_, reject) =>
+          setTimeout(() => reject(new Error('Session check timeout')), 5000)
+        )
+
+        console.log('[Auth] Calling getSession...')
+        const sessionPromise = getSession()
+        const currentSession = await Promise.race([sessionPromise, timeoutPromise])
+        console.log('[Auth] Session result:', currentSession ? 'found' : 'none')
+
         setSession(currentSession)
         setUser(currentSession?.user ?? null)
       } catch (error) {
-        console.error('Error getting session:', error)
+        console.error('[Auth] Error getting session:', error)
+        // On timeout or error, assume no session
+        setSession(null)
+        setUser(null)
       } finally {
+        console.log('[Auth] Setting loading to false')
         setLoading(false)
       }
     }
@@ -53,6 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        console.log('Auth state changed:', event)
         setSession(newSession)
         setUser(newSession?.user ?? null)
         setLoading(false)
@@ -103,6 +124,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signIn: handleSignIn,
     signUp: handleSignUp,
     signOut: handleSignOut,
+  }
+
+  // Prevent hydration mismatch - don't render until mounted on client
+  if (!mounted || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wardrobe-600 mx-auto"></div>
+          <p className="mt-2 text-sm text-gray-500">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

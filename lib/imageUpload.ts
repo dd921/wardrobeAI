@@ -67,7 +67,7 @@ export const uploadImage = async (
 
     // Upload file to Supabase Storage
     const { data, error } = await supabase.storage
-      .from('wardrobe-images')
+      .from('clothing-images')
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false
@@ -85,7 +85,7 @@ export const uploadImage = async (
 
     // Get public URL
     const { data: urlData } = supabase.storage
-      .from('wardrobe-images')
+      .from('clothing-images')
       .getPublicUrl(filePath)
 
     console.log('Public URL generated:', urlData.publicUrl)
@@ -174,7 +174,7 @@ export const deleteImage = async (imageUrl: string): Promise<boolean> => {
     // Extract file path from URL
     const url = new URL(imageUrl)
     const pathParts = url.pathname.split('/')
-    const bucketIndex = pathParts.findIndex(part => part === 'wardrobe-images')
+    const bucketIndex = pathParts.findIndex(part => part === 'clothing-images')
     
     if (bucketIndex === -1) {
       console.error('Invalid image URL format')
@@ -184,7 +184,7 @@ export const deleteImage = async (imageUrl: string): Promise<boolean> => {
     const filePath = pathParts.slice(bucketIndex + 1).join('/')
     
     const { error } = await supabase.storage
-      .from('wardrobe-images')
+      .from('clothing-images')
       .remove([filePath])
 
     if (error) {

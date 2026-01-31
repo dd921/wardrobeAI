@@ -1,9 +1,11 @@
-import { createClient, User, Session } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
+import { User, Session } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Browser client that properly syncs with cookies for SSR
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
 
 // Auth helper functions
 export const signUp = async (email: string, password: string) => {

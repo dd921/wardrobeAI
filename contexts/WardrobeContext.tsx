@@ -2,10 +2,10 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { ClothingItem, Tag, Outfit, WardrobeStats } from '@/types/wardrobe'
-import { 
-  getClothingItems, 
-  addClothingItem, 
-  updateClothingItem, 
+import {
+  getClothingItems,
+  addClothingItem,
+  updateClothingItem,
   deleteClothingItem,
   getTags,
   addTag,
@@ -13,6 +13,7 @@ import {
   addOutfit,
   getWardrobeStats
 } from '@/lib/database'
+import { useAuth } from './AuthContext'
 
 interface WardrobeContextType {
   // State
@@ -54,6 +55,7 @@ interface WardrobeProviderProps {
 }
 
 export const WardrobeProvider: React.FC<WardrobeProviderProps> = ({ children }) => {
+  const { user, loading: authLoading } = useAuth()
   const [items, setItems] = useState<ClothingItem[]>([])
   const [tags, setTags] = useState<Tag[]>([])
   const [outfits, setOutfits] = useState<Outfit[]>([])
@@ -211,10 +213,23 @@ export const WardrobeProvider: React.FC<WardrobeProviderProps> = ({ children }) 
     }
   }
 
-  // Initialize data on mount
+  // Initialize data when user is authenticated
   useEffect(() => {
-    refreshAll()
-  }, [])
+    if (authLoading) {
+      return // Wait for auth to complete
+    }
+
+    if (user) {
+      refreshAll()
+    } else {
+      // Clear data when logged out
+      setItems([])
+      setTags([])
+      setOutfits([])
+      setStats(null)
+      setLoading(false)
+    }
+  }, [user, authLoading])
 
   const value: WardrobeContextType = {
     // State

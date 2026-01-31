@@ -47,56 +47,48 @@ export default function DashboardStats() {
     )
   }
 
+  const mostWornItem = stats?.mostWorn?.[0]
+  const categoryCount = Object.keys(stats?.categoryBreakdown || {}).length
+
   const statsData = [
     {
       name: 'Total Items',
       value: stats?.totalItems || 0,
       icon: Shirt,
-      change: '+12%',
-      changeType: 'increase' as const,
-      description: 'from last month'
+      description: 'in your wardrobe'
     },
     {
       name: 'Total Value',
       value: formatPrice(stats?.totalValue || 0),
       icon: DollarSign,
-      change: '+8%',
-      changeType: 'increase' as const,
-      description: 'from last month'
+      description: 'estimated worth'
     },
     {
       name: 'Most Worn',
-      value: stats?.mostWorn?.[0]?.wearCount || 0,
+      value: mostWornItem ? `${mostWornItem.wearCount}x` : '—',
       icon: TrendingUp,
-      change: '+5',
-      changeType: 'increase' as const,
-      description: 'times this month'
+      description: mostWornItem?.name || 'No items yet'
     },
     {
-      name: 'Recent Additions',
+      name: 'Added This Week',
       value: stats?.recentItems || 0,
       icon: Calendar,
-      change: '+3',
-      changeType: 'increase' as const,
-      description: 'this week'
+      description: 'new items'
     },
     {
       name: 'Favorites',
       value: stats?.favoriteItems || 0,
       icon: Heart,
-      change: '+2',
-      changeType: 'increase' as const,
-      description: 'this month'
+      description: 'items marked'
     },
     {
-      name: 'Active Tags',
-      value: Object.keys(stats?.categoryBreakdown || {}).length,
+      name: 'Categories',
+      value: categoryCount,
       icon: Tag,
-      change: '+7',
-      changeType: 'increase' as const,
-      description: 'this month'
+      description: 'in use'
     }
   ]
+
   return (
     <div className="card">
       <h2 className="text-lg font-semibold text-gray-900 mb-6">Overview</h2>
@@ -104,27 +96,21 @@ export default function DashboardStats() {
         {statsData.map((stat) => (
           <div key={stat.name} className="relative overflow-hidden rounded-lg bg-white px-4 py-5 border border-gray-200">
             <dt>
-              <div className="absolute rounded-md bg-primary-500 p-3">
+              <div className="absolute rounded-md bg-wardrobe-500 p-3">
                 <stat.icon className="h-6 w-6 text-white" aria-hidden="true" />
               </div>
               <p className="ml-16 truncate text-sm font-medium text-gray-500">
                 {stat.name}
               </p>
             </dt>
-            <dd className="ml-16 flex items-baseline">
+            <dd className="ml-16">
               <p className="text-2xl font-semibold text-gray-900">
                 {stat.value}
               </p>
-              <p className={`
-                ml-2 flex items-baseline text-sm font-semibold
-                ${stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600'}
-              `}>
-                {stat.change}
+              <p className="text-sm text-gray-500 truncate">
+                {stat.description}
               </p>
             </dd>
-            <p className="ml-16 text-sm text-gray-500">
-              {stat.description}
-            </p>
           </div>
         ))}
       </div>
